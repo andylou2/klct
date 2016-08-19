@@ -98,12 +98,25 @@ def limited_addstr(screen, y, x, *args): #args[0] is the string to print
     msg = args[0]
     if len(msg) + x >= dims[1]:
         LOG.warning("String: \"{}\" does not fit on the screen. Truncating.".format(msg))
-        msg = msg[:x + dims[1] - len(msg) - 2] + '..'
-        LOG.info("truncated results: {}, x: {}, len of string: {}, bounds: {}".format(msg, x, len(msg), dims[1]))
+        msg = msg[:dims[1] - x - 2] + '..'
     if  x < 0 or 1 + y >= dims[0] or y < 0:
         LOG.warning("String: \"{}\" does not fit on the screen. Unable to Truncate.".format(msg))
         return;
     screen.addstr(y, x, msg, *(args[1:]))
+
+def limited_addch(screen, y, x, ch):
+    dims = screen.getmaxyx()
+    if x < 0:
+        x = 0
+    if y < 0:
+        y = 0
+    if y > dims[0]:
+        y = dims[0] - 1
+    if x > dims[1]:
+        x = dims[1] - 1
+
+    screen.addch(y, x, ch)
+
 
 
 def display_list_with_numbers(screen, y, x, list_given):
@@ -157,7 +170,7 @@ def my_raw_input(screen, y, x, prompt_string, default=""):
     curses.noecho()
     curses.curs_set(True)
     limited_addstr(screen, y, x, prompt_string, curses.color_pair(2))
-    screen.addch(y + 1, x, ">")
+    limited_addch(screen, y + 1, x, ">")
     screen.refresh()
     x_coord = x + 1
     str_input_pos = 0
@@ -187,19 +200,19 @@ def my_raw_input(screen, y, x, prompt_string, default=""):
             status_window_text.refresh()
         elif c < 256:
             str_input.append(chr(c))
-            screen.addch(y + 1, x_coord, str(chr(c)))
+            limited_addch(screen, y + 1, x_coord, str(chr(c)))
             x_coord += 1
             str_input_pos += 1
         elif c in (263, 8, 330):
             if x_coord > x + 1:
                 x_coord -= 1
                 screen.refresh()
-            screen.addch(y + 1, x_coord, " ")
+            limited_addch(screen, y + 1, x_coord, " ")
             if str_input_pos > 0:
                 str_input_pos -= 1
             if len(str_input) > 0:
                 str_input.pop()
-        screen.move(y + 1, x_coord)
+        # screen.move(y + 1, x_coord)
         c = screen.getch()
     string_input = ''.join(str_input)
     string_input = string_input.strip()
@@ -218,7 +231,7 @@ def my_pw_input(screen, y, x, prompt_string):
     curses.noecho()  # no echoing
     curses.curs_set(True)
     limited_addstr(screen, y, x, prompt_string, curses.color_pair(2))
-    screen.addch(y + 1, x, ">")
+    limited_addch(screen, y + 1, x, ">")
     screen.refresh()
     x_coord = x + 1
     str_input_pos = 0
@@ -227,13 +240,13 @@ def my_pw_input(screen, y, x, prompt_string):
     while c != 10:
         if c < 256:
             str_input.append(chr(c))
-            screen.addch(y + 1, x_coord, "*")
+            limited_addch(screen, y + 1, x_coord, "*")
             x_coord += 1
             str_input_pos += 1
         if c in (263, 8, 330):
             if x_coord > x + 1:
                 x_coord -= 1
-            screen.addch(y + 1, x_coord, " ")
+            limited_addch(screen, y + 1, x_coord, " ")
             if str_input_pos > 0:
                 str_input_pos -= 1
             if len(str_input) > 0:
@@ -253,7 +266,7 @@ def prompt_char_input(screen, y, x, prompt_string, list_given):
     curses.echo()  # no echoing
     curses.curs_set(True)
     limited_addstr(screen, y, x, prompt_string, curses.color_pair(2))
-    screen.addch(y + 1, x, ">")
+    limited_addch(screen, y + 1, x, ">")
     screen.refresh()
     ch_input = screen.getstr(y + 1, x + 1, 1).decode(encoding="utf-8")  # 20 = max chars to in string
     LOG.info("list_given: {}".format(list_given))
