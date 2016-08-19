@@ -243,8 +243,7 @@ class LDAPService(object):
             version = ""
             i = 0
             try:
-                version_result = self.conn.response[0]['attributes']
-                ['supportedLDAPVersion']
+                version_result = self.server.info.supported_ldap_versions
                 for i in range(len(version_result) - 1):
                     version = "{} {}, ".format(version, str(version_result[i]))
                 if len(version_result) == 1:
@@ -257,8 +256,7 @@ class LDAPService(object):
                 LOG.warning("Unable to find supported ldap versions")
                 version = "N/A"
             try:
-                server_type = self.conn.response[0]['attributes']
-                ['structuralObjectClass']
+                server_type = self.conn.response[0]['attributes']['structuralObjectClass']
                 LOG.debug("Found ldap server type: {}".format(server_type))
             except:
                 if str(self.server.info).lower().find("microsoft") != -1 \

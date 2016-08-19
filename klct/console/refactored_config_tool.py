@@ -93,12 +93,17 @@ def resize_windows():
     LOG.info("Status window Text Refreshed")
 
 
-def limited_addstr(screen, y, x, *args):
+def limited_addstr(screen, y, x, *args): #args[0] is the string to print
     dims = screen.getmaxyx()
-    if len(args[0]) + x >= dims[1] or 1 + y >= dims[0] or x < 0 or y < 0:
-        LOG.warning("String: \"{}\" does not fit on the screen".format(args[0]))
-    else:
-        screen.addstr(y, x, *args)
+    msg = args[0]
+    if len(msg) + x >= dims[1]:
+        LOG.warning("String: \"{}\" does not fit on the screen. Truncating.".format(msg))
+        msg = msg[:x + dims[1] - len(msg) - 2] + '..'
+        LOG.info("truncated results: {}, x: {}, len of string: {}, bounds: {}".format(msg, x, len(msg), dims[1]))
+    if  x < 0 or 1 + y >= dims[0] or y < 0:
+        LOG.warning("String: \"{}\" does not fit on the screen. Unable to Truncate.".format(msg))
+        return;
+    screen.addstr(y, x, msg, *(args[1:]))
 
 
 def display_list_with_numbers(screen, y, x, list_given):
@@ -106,7 +111,8 @@ def display_list_with_numbers(screen, y, x, list_given):
     num_elements = len(list_given)
     for i in range(num_elements):
         elem_i = str(list_given[i])
-        elem_string = unicode("{i}. {elem}".format(i=i+1, elem=elem_i))
+        #elem_string = unicode("{i}. {elem}".format(i=i+1, elem=elem_i)) #unicode does not exist in python3.4
+        elem_string = "{i}. {elem}".format(i=i+1, elem=elem_i)
         limited_addstr(screen, y + i, x, elem_string)
 
 
@@ -116,7 +122,8 @@ def display_list_with_numbers_test(screen, y, x, list_given):
     for i in range(num_elements):
         elem_i = str(list_given[i])
         elem_i = elem_i.replace('\n', "")
-        elem_string = unicode("{i}. {elem}".format(i=i+1, elem=elem_i))
+        #elem_string = unicode("{i}. {elem}".format(i=i+1, elem=elem_i)) #unicode does not exist in python3.4
+        elem_string = "{i}. {elem}".format(i=i+1, elem=elem_i)
         limited_addstr(screen, y + i, x, elem_string)
 
 
@@ -248,13 +255,16 @@ def prompt_char_input(screen, y, x, prompt_string, list_given):
     limited_addstr(screen, y, x, prompt_string, curses.color_pair(2))
     screen.addch(y + 1, x, ">")
     screen.refresh()
-    ch_input = screen.getstr(y + 1, x + 1, 1)  # 20 = max chars to in string
+    ch_input = screen.getstr(y + 1, x + 1, 1).decode(encoding="utf-8")  # 20 = max chars to in string
+    LOG.info("list_given: {}".format(list_given))
+    LOG.info("char: {}".format(ch_input))
     while ch_input not in list_given:
         limited_addstr(screen, y, x, "                                     ")
         limited_addstr(screen, y + 1, x, "> ")
         limited_addstr(screen, y, x, prompt_string, curses.color_pair(2))
         screen.refresh()
-        ch_input = screen.getstr(y + 1, x + 1, 1)
+        ch_input = screen.getstr(y + 1, x + 1, 1).decode(encoding="utf-8")
+
     curses.noecho()
     curses.curs_set(False)
     return ch_input
@@ -266,7 +276,7 @@ def my_numb_input(screen, y, x, prompt_string, limit=None, default=None):
     limited_addstr(screen, y, x, prompt_string, curses.color_pair(2))
     limited_addstr(screen, y + 1, x, ">            ")
     screen.refresh()
-    numb_input = screen.getstr(y + 1, x + 1, 10)
+    numb_input = screen.getstr(y + 1, x + 1, 10).decode(encoding="utf-8")
     numb_input = numb_input.strip()
     if numb_input == "":
         limited_addstr(screen, y+1, x+1, str(default))
@@ -278,7 +288,7 @@ def my_numb_input(screen, y, x, prompt_string, limit=None, default=None):
                       "                                                      ")
         limited_addstr(screen, y + 1, x, ">                                 ")
         limited_addstr(screen, y, x, prompt_string, curses.color_pair(2))
-        numb_input = screen.getstr(y + 1, x + 1, 10)
+        numb_input = screen.getstr(y + 1, x + 1, 10).decode(encoding="utf-8")
     if limit is not None:
         if int(numb_input) > limit:
             curses.noecho()
